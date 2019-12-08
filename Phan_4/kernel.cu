@@ -157,7 +157,6 @@ __global__ void scanBlkKernel(int * in, int n, int * out, int * blkSums)
 	}
 }
 
-// TODO: You can define necessary functions here
 __global__ void scanSumKernel(int *in, int *blkSums, int n) {
 	if (blockIdx.x >= 1) {
 		int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -165,6 +164,25 @@ __global__ void scanSumKernel(int *in, int *blkSums, int n) {
 	}
 }
 
+void swapMemories(uint32_t *&a, uint32_t *&b) {
+	uint32_t* temp = a;
+	a = b;
+	b = temp;
+}
+void createHistExclusiveScan(int *histScan, int *temp, int nBins) {
+	memcpy(temp, histScan, nBins * sizeof(int));
+	histScan[0] = 0;
+	for (int i = 1; i < nBins; i++) {
+		histScan[i] = temp[i - 1];
+	}
+}
+void scanBlockSum(int *in, int *out, int size) {
+	out[0] = in[0];
+	for (int i = 1; i < size; i++)
+	{
+		out[i] = out[i - 1] + in[i];
+	}
+}
 void sortByDevice(const uint32_t * in, int n,
 	uint32_t * out,
 	int nBits, int * blockSizes)
@@ -195,6 +213,12 @@ void sortByDevice(const uint32_t * in, int n,
 	uint32_t * originalSrc = src; // Use originalSrc to free memory later
 	uint32_t * dst = out;
 
+	// Initialize d_blkSums
+	int *d_blkSums; CHECK(cudaMalloc(&d_blkSums, gridSizeScan.x * sizeof(int)));
+	int *blkSums = (int*)malloc(gridSizeScan.x * sizeof(int));
+	int *scan_blkSums = (int*)malloc(gridSizeScan.x * sizeof(int));
+	int * histScanTemp = (int *)malloc(nBins * sizeof(int));
+
 	for (int bit = 0; bit < sizeof(uint32_t) * 8; bit += nBits)
 	{
 		// TODO: Compute "hist" of the current digit
@@ -203,12 +227,7 @@ void sortByDevice(const uint32_t * in, int n,
 		CHECK(cudaGetLastError());
 
 		// TODO: Scan "hist" (exclusively) and save the result to "histScan"
-		// Khoi tao bien blkSums
-		int *blkSums = (int*)malloc(gridSizeScan.x * sizeof(int));
-
-		// Cap phat bo nho
-		int *d_blkSums; CHECK(cudaMalloc(&d_blkSums, gridSizeScan.x * sizeof(int)));
-
+		
 		// Goi ham kernel scan
 		scanBlkKernel << <gridSizeScan, blockSizes[1], smem_size >> > (d_hist, nBins, d_histScan, d_blkSums);
 		CHECK(cudaGetLastError());
@@ -217,12 +236,7 @@ void sortByDevice(const uint32_t * in, int n,
 		CHECK(cudaMemcpy(blkSums, d_blkSums, gridSizeScan.x * sizeof(int), cudaMemcpyDeviceToHost));
 
 		// Goi ham scan tai host cho mang blkSums
-		int *scan_blkSums = (int*)malloc(gridSizeScan.x * sizeof(int));
-		scan_blkSums[0] = blkSums[0];
-		for (int i = 1; i < gridSizeScan.x; i++)
-		{
-			scan_blkSums[i] = scan_blkSums[i - 1] + blkSums[i];
-		}
+		scanBlockSum(scan_blkSums, blkSums, gridSizeScan.x);
 
 		// Chep du lieu tu host sang device
 		CHECK(cudaMemcpy(d_blkSums, scan_blkSums, gridSizeScan.x * sizeof(int), cudaMemcpyHostToDevice));
@@ -234,16 +248,8 @@ void sortByDevice(const uint32_t * in, int n,
 		// Chep du lieu tu device sang host
 		CHECK(cudaMemcpy(histScan, d_histScan, nBins * sizeof(int), cudaMemcpyDeviceToHost));
 
-		// Giai phong du lieu
-		CHECK(cudaFree(d_blkSums));
-
 		// Tao mang exclusive
-		int * histScanTemp = (int *)malloc(nBins * sizeof(int));
-		memcpy(histScanTemp, histScan, nBins * sizeof(int));
-		histScan[0] = 0;
-		for (int i = 1; i < nBins; i++) {
-			histScan[i] = histScanTemp[i - 1];
-		}
+		createHistExclusiveScan(histScan, histScanTemp, nBins);
 
 		// TODO: From "histScan", scatter elements in "src" to correct locations in "dst"
 		for (int i = 0; i < n; i++) {
@@ -252,9 +258,10 @@ void sortByDevice(const uint32_t * in, int n,
 			histScan[bin]++;
 		}
 		// TODO: Swap "src" and "dst"
-		uint32_t *temp = src;
+		/*uint32_t *temp = src;
 		src = dst;
-		dst = temp;
+		dst = temp;*/
+		swapMemories(src, dst);
 	}
 
 	// TODO: Copy result to "out"
@@ -264,6 +271,11 @@ void sortByDevice(const uint32_t * in, int n,
 	free(hist);
 	free(histScan);
 	free(originalSrc);
+	free(blkSums);
+	free(scan_blkSums);
+	free(histScanTemp);
+	CHECK(cudaFree(d_hist));
+	CHECK(cudaFree(d_histScan));
 }
 
 // Radix sort
