@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.757
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Phan_1", "Phan_1\Phan_1.vcxproj", "{679F54B2-935F-47E5-A9F0-ED37EC7E7933}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Phan_2", "Phan_2\Phan_2.vcxproj", "{75A8B9F0-EC83-4BDA-AA9A-618CF86813B8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Phan_4", "Phan_4\Phan_4.vcxproj", "{2F7E531D-AED5-4C06-9B27-6E9EAB49550B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{CFC3E32B-F0D5-4B9F-BBC1-F839C5691862}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{679F54B2-935F-47E5-A9F0-ED37EC7E7933}.Debug|x64.ActiveCfg = Debug|x64
+		{679F54B2-935F-47E5-A9F0-ED37EC7E7933}.Debug|x64.Build.0 = Debug|x64
+		{679F54B2-935F-47E5-A9F0-ED37EC7E7933}.Release|x64.ActiveCfg = Release|x64
+		{679F54B2-935F-47E5-A9F0-ED37EC7E7933}.Release|x64.Build.0 = Release|x64
+		{75A8B9F0-EC83-4BDA-AA9A-618CF86813B8}.Debug|x64.ActiveCfg = Debug|x64
+		{75A8B9F0-EC83-4BDA-AA9A-618CF86813B8}.Debug|x64.Build.0 = Debug|x64
+		{75A8B9F0-EC83-4BDA-AA9A-618CF86813B8}.Release|x64.ActiveCfg = Release|x64
+		{75A8B9F0-EC83-4BDA-AA9A-618CF86813B8}.Release|x64.Build.0 = Release|x64
+		{2F7E531D-AED5-4C06-9B27-6E9EAB49550B}.Debug|x64.ActiveCfg = Debug|x64
+		{2F7E531D-AED5-4C06-9B27-6E9EAB49550B}.Debug|x64.Build.0 = Debug|x64
+		{2F7E531D-AED5-4C06-9B27-6E9EAB49550B}.Release|x64.ActiveCfg = Release|x64
+		{2F7E531D-AED5-4C06-9B27-6E9EAB49550B}.Release|x64.Build.0 = Release|x64
+		{CFC3E32B-F0D5-4B9F-BBC1-F839C5691862}.Debug|x64.ActiveCfg = Debug|x64
+		{CFC3E32B-F0D5-4B9F-BBC1-F839C5691862}.Debug|x64.Build.0 = Debug|x64
+		{CFC3E32B-F0D5-4B9F-BBC1-F839C5691862}.Release|x64.ActiveCfg = Release|x64
+		{CFC3E32B-F0D5-4B9F-BBC1-F839C5691862}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FB677E00-1AF2-477B-8DD1-75CE0755FE0F}
+	EndGlobalSection
+EndGlobal
