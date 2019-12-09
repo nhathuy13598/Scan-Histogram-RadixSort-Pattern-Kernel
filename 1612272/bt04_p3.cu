@@ -114,17 +114,28 @@ void sortByHost(const uint32_t * in, int n,
 // Because we may want different block sizes for diffrent kernels:
 //   blockSizes[0] for the histogram kernel
 //   blockSizes[1] for the scan kernel
-__global__ void computeHistKernel1(uint32_t * in, int n, int * hist, int bit, int nBins)
+__global__ void computeHistKernel2(uint32_t * in, int n, int * hist, int bit, int nBins)
 {
 	// TODO
+	// Each block computes its local hist using atomic on SMEM
+	extern __shared__ int s_hist[];
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	if (i < n)
-	{
+	for (int stride = threadIdx.x; stride < nBins; stride += blockDim.x) {
+		s_hist[stride] = 0;
+	}
+	__syncthreads();
+	if (i < n) {
 		int bin = (in[i] >> bit) & (nBins - 1);
-		atomicAdd(&hist[bin], 1);
+		atomicAdd(&s_hist[bin], 1);
+	}
+		
+	__syncthreads();
+
+	// Each block adds its local hist to global hist using atomic on GMEM
+	for (int stride = threadIdx.x; stride < nBins; stride += blockDim.x) {
+		atomicAdd(&hist[stride], s_hist[stride]);
 	}
 }
-
 __global__ void scanBlkKernel(int * in, int n, int * out, int * blkSums)
 {
 	// TODO
@@ -219,7 +230,7 @@ void sortByDevice(const uint32_t * in, int n,
 	{
 		// TODO: Compute "hist" of the current digit
 		CHECK(cudaMemset(d_hist, 0, nBins * sizeof(int)));
-		computeHistKernel1 << <gridSizeHist, blockSizes[0] >> > (d_in, n, d_hist, bit, nBins);
+		computeHistKernel2 << <gridSizeHist, blockSizes[0], nBins * sizeof(int) >> > (d_in, n, d_hist, bit, nBins);
 		CHECK(cudaGetLastError());
 
 		// TODO: Scan "hist" (exclusively) and save the result to "histScan"
@@ -254,9 +265,6 @@ void sortByDevice(const uint32_t * in, int n,
 			histScan[bin]++;
 		}
 		// TODO: Swap "src" and "dst"
-		/*uint32_t *temp = src;
-		src = dst;
-		dst = temp;*/
 		swapMemories(src, dst);
 	}
 
@@ -385,5 +393,3 @@ int main(int argc, char ** argv)
 
 	return EXIT_SUCCESS;
 }
-
-
